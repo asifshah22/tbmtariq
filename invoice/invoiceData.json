@@ -1,0 +1,22 @@
+{
+    "invoiceId": "12345",
+    "invoiceDateTime": "2025-02-18 14:30",
+    "customer": {
+        "name": "John Doe",
+        "address": "1234 Elm Street, Springfield, IL"
+    },
+    "items": [
+        {
+            "description": "Product 1",
+            "quantity": 2,
+            "rate": 50,
+            "tax": 10
+        },
+        {
+            "description": "Product 2",
+            "quantity": 1,
+            "rate": 150,
+            "tax": 15
+        }
+    ]
+}

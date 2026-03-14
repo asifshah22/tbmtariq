@@ -1,0 +1,5 @@
+[28-Jul-2025 11:32:21 UTC] PHP Warning:  require(/home/tbmecxyu/tbmtariq.tbmengineering.com/medical-invoice/../vendor/autoload.php): Failed to open stream: No such file or directory in /home/tbmecxyu/tbmtariq.tbmengineering.com/medical-invoice/index.php on line 34
+[28-Jul-2025 11:32:21 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/tbmecxyu/tbmtariq.tbmengineering.com/medical-invoice/../vendor/autoload.php' (include_path='.:/opt/alt/php80/usr/share/pear:/opt/alt/php80/usr/share/php:/usr/share/pear:/usr/share/php') in /home/tbmecxyu/tbmtariq.tbmengineering.com/medical-invoice/index.php:34
+Stack trace:
+#0 {main}
+  thrown in /home/tbmecxyu/tbmtariq.tbmengineering.com/medical-invoice/index.php on line 34
