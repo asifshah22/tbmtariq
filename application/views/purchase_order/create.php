@@ -60,13 +60,24 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">PO Number</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" name="po_number" value="<?php echo isset($order['po_number']) ? $order['po_number'] : ''; ?>" required>
+                  <input type="text" class="form-control" name="po_number" value="<?php echo isset($order['po_number']) ? $order['po_number'] : ''; ?>" readonly required>
                 </div>
 
                 <label class="col-sm-2 control-label">PO Date</label>
                 <div class="col-sm-4">
                   <?php $po_date = isset($order['po_date']) ? $order['po_date'] : date('Y-m-d'); ?>
                   <input type="date" class="form-control" name="po_date" value="<?php echo $po_date; ?>" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Status</label>
+                <div class="col-sm-4">
+                  <?php $status = isset($order['status']) ? $order['status'] : 'Pending'; ?>
+                  <select class="form-control" name="status">
+                    <option value="Pending" <?php echo ($status === 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Complete" <?php echo ($status === 'Complete') ? 'selected' : ''; ?>>Complete</option>
+                  </select>
                 </div>
               </div>
 
@@ -375,6 +386,10 @@
     recalcTotals();
   })();
 </script>
+
+
+
+
 
 
 

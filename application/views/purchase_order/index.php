@@ -48,6 +48,7 @@
                   <th style="color:#3c8dbc">Date</th>
                   <th style="color:#3c8dbc">PO Number</th>
                   <th style="color:#3c8dbc">Vendor</th>
+                  <th style="color:#3c8dbc">Status</th>
                   <th style="color:#3c8dbc">Total</th>
                   <th style="color:#3c8dbc">Sales Tax</th>
                   <th style="color:#3c8dbc">Grand Total</th>
@@ -133,3 +134,4 @@
     }
   }
 </script>
+

@@ -32,6 +32,15 @@ class Model_purchase_order extends CI_Model
         return $order_id;
     }
 
+    public function generatePoNumber()
+    {
+        $sql = "SELECT MAX(id) AS max_id FROM purchase_orders_custom";
+        $query = $this->db->query($sql);
+        $row = $query->row_array();
+        $next = isset($row['max_id']) ? (int)$row['max_id'] + 1 : 1;
+        return 'PO-' . date('Ymd') . '-' . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+    }
+
     public function getOrder($order_id)
     {
         if (!$order_id) {

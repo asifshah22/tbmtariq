@@ -57,7 +57,10 @@ class Purchase_order extends CI_Controller
         $data['page_title'] = 'Purchase Order';
         $data['vendor_data'] = $this->Model_supplier->getSupplierData();
         $data['is_edit'] = false;
-        $data['order'] = array();
+        $data['order'] = array(
+            'po_number' => $this->Model_purchase_order->generatePoNumber(),
+            'status' => 'Pending'
+        );
         $data['items'] = array();
         $data['action_url'] = base_url() . 'index.php/Purchase_order/create';
 
@@ -94,13 +97,14 @@ class Purchase_order extends CI_Controller
 
         $order_data = array(
             'vendor_id' => $this->input->post('vendor_id'),
-            'po_number' => $this->input->post('po_number'),
+            'po_number' => $this->Model_purchase_order->generatePoNumber(),
             'po_date' => $this->input->post('po_date'),
             'delivery' => $this->input->post('delivery'),
             'terms_of_payment' => $this->input->post('terms_of_payment'),
             'contact_person' => $this->input->post('contact_person'),
             'contact_no' => $this->input->post('contact_no'),
             'remarks' => $this->input->post('remarks'),
+            'status' => $this->input->post('status') ? $this->input->post('status') : 'Pending',
             'total_amount' => $this->input->post('total_amount'),
             'sales_tax_percent' => $this->input->post('sales_tax_percent'),
             'sales_tax_amount' => $this->input->post('sales_tax_amount'),
@@ -185,6 +189,7 @@ class Purchase_order extends CI_Controller
             'contact_person' => $this->input->post('contact_person'),
             'contact_no' => $this->input->post('contact_no'),
             'remarks' => $this->input->post('remarks'),
+            'status' => $this->input->post('status') ? $this->input->post('status') : 'Pending',
             'total_amount' => $this->input->post('total_amount'),
             'sales_tax_percent' => $this->input->post('sales_tax_percent'),
             'sales_tax_amount' => $this->input->post('sales_tax_amount'),
@@ -263,6 +268,7 @@ class Purchase_order extends CI_Controller
                 $value['po_date'],
                 $value['po_number'],
                 $vendor_name,
+                isset($value['status']) ? $value['status'] : '',
                 number_format((float)$value['total_amount'], 2),
                 number_format((float)$value['sales_tax_amount'], 2),
                 number_format((float)$value['grand_total'], 2),
