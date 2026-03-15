@@ -306,6 +306,11 @@
                   <i class="fa fa-circle-o"></i> <span>Purchasing Page</span>
                 </a>
               </li>
+              <li id="purchaseOrderNav">
+                <a title="Purchase Order" href="<?php echo base_url()?>index.php/Purchase_order/index">
+                  <i class="fa fa-circle-o"></i> <span>Purchase Order</span>
+                </a>
+              </li>
             <?php endif; ?>
             <?php if(in_array('recordPurchasing', $permissions)): ?>
               <li id="managePurchasingsNav">
