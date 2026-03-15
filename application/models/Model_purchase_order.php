@@ -108,4 +108,38 @@ class Model_purchase_order extends CI_Model
 
         return $this->db->trans_status() !== false;
     }
+
+    public function getVendorProductsWithLatestPrice($vendor_id)
+    {
+        if (!$vendor_id) {
+            return array();
+        }
+
+        $sql = "
+            SELECT tab1.product_id
+                , tab1.category_id
+                , tab1.price
+                , products.name AS product_name
+                , categories.name AS category_name
+            FROM product_prices tab1
+            INNER JOIN (
+                SELECT product_id, category_id, vendor_id, MAX(date_time) as max_date_time
+                FROM product_prices
+                WHERE vendor_id = ? AND is_deleted = 0
+                GROUP BY product_id, category_id, vendor_id
+            ) tab2 ON tab1.product_id = tab2.product_id
+                AND tab1.category_id = tab2.category_id
+                AND tab1.vendor_id = tab2.vendor_id
+                AND tab1.date_time = tab2.max_date_time
+            INNER JOIN products ON tab1.product_id = products.id
+            INNER JOIN product_category ON tab1.product_id = product_category.product_id
+                AND tab1.category_id = product_category.category_id
+            LEFT JOIN categories ON categories.id = product_category.category_id
+            WHERE tab1.is_deleted = 0
+            ORDER BY products.name ASC
+        ";
+
+        $query = $this->db->query($sql, array($vendor_id));
+        return $query->result_array();
+    }
 }

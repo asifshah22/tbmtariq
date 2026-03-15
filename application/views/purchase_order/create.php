@@ -139,7 +139,11 @@
                     <?php else: ?>
                       <tr id="row_1">
                         <td>1</td>
-                        <td><input type="text" name="part_name[]" class="form-control" required></td>
+                        <td>
+                          <select name="part_name[]" class="form-control part_name_select" data-current="" required>
+                            <option value="">Select Part</option>
+                          </select>
+                        </td>
                         <td><input type="text" name="model[]" class="form-control"></td>
                         <td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>
                         <td><input type="text" name="unit[]" class="form-control"></td>
@@ -197,6 +201,67 @@
 <script>
   (function() {
     var rowCount = <?php echo !empty($items) ? count($items) : 1; ?>;
+    var vendorProducts = [];
+
+    function buildPartOptions(currentValue) {
+      var html = '<option value="">Select Part</option>';
+      var found = false;
+      for (var i = 0; i < vendorProducts.length; i++) {
+        var p = vendorProducts[i];
+        var name = p.product_name || '';
+        if (!name) {
+          continue;
+        }
+        var label = name;
+        if (p.category_name) {
+          label += ' - ' + p.category_name;
+        }
+        var price = (p.price !== null && typeof p.price !== 'undefined') ? p.price : '';
+        var priceAttr = price !== '' ? ' data-price="' + price + '"' : '';
+        html += '<option value="' + name + '"' + priceAttr + '>' + label + '</option>';
+        if (currentValue && name === currentValue) {
+          found = true;
+        }
+      }
+      if (currentValue && !found) {
+        html += '<option value="' + currentValue + '" selected>' + currentValue + '</option>';
+      }
+      return html;
+    }
+
+    function refreshPartSelects() {
+      $('.part_name_select').each(function() {
+        var current = $(this).data('current') || $(this).val() || '';
+        $(this).html(buildPartOptions(current));
+        if (current) {
+          $(this).val(current);
+        }
+        $(this).data('current', '');
+      });
+    }
+
+    function loadVendorProducts(vendorId) {
+      if (!vendorId) {
+        vendorProducts = [];
+        refreshPartSelects();
+        return;
+      }
+
+      $.ajax({
+        url: "<?php echo base_url(); ?>index.php/Purchase_order/get_vendor_products",
+        type: "post",
+        dataType: "json",
+        data: { vendor_id: vendorId },
+        success: function(response) {
+          if (response && response.success) {
+            vendorProducts = response.data || [];
+          } else {
+            vendorProducts = [];
+          }
+          refreshPartSelects();
+        }
+      });
+    }
 
     function recalcRow(row) {
       var qty = parseFloat(row.find('.qty').val()) || 0;
@@ -225,7 +290,7 @@
       rowCount++;
       var row = '<tr id="row_' + rowCount + '">' +
         '<td>' + rowCount + '</td>' +
-        '<td><input type="text" name="part_name[]" class="form-control" required></td>' +
+        '<td><select name="part_name[]" class="form-control part_name_select" data-current="" required><option value="">Select Part</option></select></td>' +
         '<td><input type="text" name="model[]" class="form-control"></td>' +
         '<td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>' +
         '<td><input type="text" name="unit[]" class="form-control"></td>' +
@@ -235,6 +300,7 @@
         '<td><button type="button" class="btn btn-default remove_row" data-row="' + rowCount + '"><i class="fa fa-minus"></i></button></td>' +
       '</tr>';
       $('#po_items_table tbody').append(row);
+      refreshPartSelects();
     });
 
     $('#po_items_table').on('click', '.remove_row', function() {
@@ -252,12 +318,25 @@
       recalcTotals();
     });
 
+    $('#po_items_table').on('change', '.part_name_select', function() {
+      var row = $(this).closest('tr');
+      var price = $(this).find('option:selected').data('price');
+      if (typeof price !== 'undefined') {
+        row.find('.rate').val(price);
+      } else {
+        row.find('.rate').val('');
+      }
+      recalcRow(row);
+      recalcTotals();
+    });
+
     $('#sales_tax_percent').on('input', function() {
       recalcTotals();
     });
 
     $('#vendor_id').on('change', function() {
       var vendorId = $(this).val();
+      loadVendorProducts(vendorId);
       if (!vendorId) {
         $('#contact_person').val('');
         $('#contact_no').val('');
@@ -288,7 +367,24 @@
     $('#mainPurchasingNav').addClass('menu-open');
     $('#purchaseOrderNav').addClass('active');
 
+    var initialVendorId = $('#vendor_id').val();
+    if (initialVendorId) {
+      loadVendorProducts(initialVendorId);
+    }
+
     recalcTotals();
   })();
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -298,6 +298,23 @@ class Purchase_order extends CI_Controller
         echo json_encode($response);
     }
 
+    public function get_vendor_products()
+    {
+        if (!in_array('createPurchasing', $this->permission) && !in_array('updatePurchasing', $this->permission)) {
+            echo json_encode(array('success' => false, 'data' => array()));
+            return;
+        }
+
+        $vendor_id = $this->input->post('vendor_id');
+        if (!$vendor_id) {
+            echo json_encode(array('success' => false, 'data' => array()));
+            return;
+        }
+
+        $products = $this->Model_purchase_order->getVendorProductsWithLatestPrice($vendor_id);
+        echo json_encode(array('success' => true, 'data' => $products));
+    }
+
     private function buildItemsFromPost()
     {
         $items = array();
