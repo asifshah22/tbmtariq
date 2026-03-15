@@ -45,7 +45,7 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">Vendor</label>
                 <div class="col-sm-10">
-                  <select class="form-control" name="vendor_id" required>
+                  <select class="form-control" name="vendor_id" id="vendor_id" required>
                     <option value="">Select Vendor</option>
                     <?php foreach ($vendor_data as $value): ?>
                       <?php $selected = (!empty($order) && isset($order['vendor_id']) && (int)$order['vendor_id'] === (int)$value['id']) ? 'selected' : ''; ?>
@@ -73,12 +73,12 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">Contact Person</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" name="contact_person" value="<?php echo isset($order['contact_person']) ? $order['contact_person'] : ''; ?>">
+                  <input type="text" class="form-control" name="contact_person" id="contact_person" value="<?php echo isset($order['contact_person']) ? $order['contact_person'] : ''; ?>">
                 </div>
 
                 <label class="col-sm-2 control-label">Contact No</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" name="contact_no" value="<?php echo isset($order['contact_no']) ? $order['contact_no'] : ''; ?>">
+                  <input type="text" class="form-control" name="contact_no" id="contact_no" value="<?php echo isset($order['contact_no']) ? $order['contact_no'] : ''; ?>">
                 </div>
               </div>
 
@@ -97,7 +97,7 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">Remarks</label>
                 <div class="col-sm-10">
-                  <input type="text" class="form-control" name="remarks" value="<?php echo isset($order['remarks']) ? $order['remarks'] : ''; ?>">
+                  <input type="text" class="form-control" name="remarks" id="remarks" value="<?php echo isset($order['remarks']) ? $order['remarks'] : ''; ?>">
                 </div>
               </div>
 
@@ -256,9 +256,39 @@
       recalcTotals();
     });
 
+    $('#vendor_id').on('change', function() {
+      var vendorId = $(this).val();
+      if (!vendorId) {
+        $('#contact_person').val('');
+        $('#contact_no').val('');
+        $('#remarks').val('');
+        return;
+      }
+
+      $.ajax({
+        url: "<?php echo base_url(); ?>index.php/Supplier/fetchSupplierDataById/" + vendorId,
+        type: "get",
+        dataType: "json",
+        success: function(response) {
+          var data = response && response.data ? response.data : null;
+          var phones = response && response.phones ? response.phones : [];
+
+          var contactName = '';
+          if (data) {
+            contactName = $.trim((data.first_name || '') + ' ' + (data.last_name || ''));
+          }
+
+          $('#contact_person').val(contactName);
+          $('#contact_no').val(phones && phones.length ? phones[0] : '');
+          $('#remarks').val(data && data.remarks ? data.remarks : '');
+        }
+      });
+    });
+
     $('#mainPurchasingNav').addClass('menu-open');
     $('#purchaseOrderNav').addClass('active');
 
     recalcTotals();
   })();
 </script>
+

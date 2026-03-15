@@ -228,6 +228,8 @@ class Purchase_order extends CI_Controller
         $data['vendor'] = $vendor;
 
         $this->load->view('templates/header', $data);
+        $this->load->view('templates/header_menu');
+        $this->load->view('templates/side_menubar');
         $this->load->view('purchase_order/print', $data);
         $this->load->view('templates/footer');
     }
@@ -333,3 +335,4 @@ class Purchase_order extends CI_Controller
         return $items;
     }
 }
+
