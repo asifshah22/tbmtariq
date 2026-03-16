@@ -136,10 +136,17 @@
                       <?php $row_index = 1; foreach($items as $item): ?>
                         <tr id="row_<?php echo $row_index; ?>">
                           <td><?php echo $row_index; ?></td>
-                          <td><input type="text" name="part_name[]" class="form-control" value="<?php echo $item['part_name']; ?>" required></td>
+                          <td>
+                            <select name="part_name[]" class="form-control part_name_select" data-current="<?php echo htmlspecialchars($item['part_name'], ENT_QUOTES); ?>" required>
+                              <option value="">Select Part</option>
+                              <?php if (!empty($item['part_name'])): ?>
+                                <option value="<?php echo $item['part_name']; ?>" selected><?php echo $item['part_name']; ?></option>
+                              <?php endif; ?>
+                            </select>
+                          </td>
                           <td><input type="text" name="model[]" class="form-control" value="<?php echo $item['model']; ?>"></td>
                           <td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01" value="<?php echo $item['qty']; ?>"></td>
-                          <td><input type="text" name="unit[]" class="form-control" value="<?php echo $item['unit']; ?>"></td>
+                          <td><input type="text" name="unit[]" class="form-control unit" value="<?php echo $item['unit']; ?>"></td>
                           <td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01" value="<?php echo $item['rate']; ?>"></td>
                           <td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" value="<?php echo $item['amount']; ?>" readonly></td>
                           <td><input type="text" name="item_remarks[]" class="form-control" value="<?php echo $item['remarks']; ?>"></td>
@@ -157,7 +164,7 @@
                         </td>
                         <td><input type="text" name="model[]" class="form-control"></td>
                         <td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>
-                        <td><input type="text" name="unit[]" class="form-control"></td>
+                        <td><input type="text" name="unit[]" class="form-control unit"></td>
                         <td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01"></td>
                         <td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" readonly></td>
                         <td><input type="text" name="item_remarks[]" class="form-control"></td>
@@ -229,7 +236,8 @@
         }
         var price = (p.price !== null && typeof p.price !== 'undefined') ? p.price : '';
         var priceAttr = price !== '' ? ' data-price="' + price + '"' : '';
-        html += '<option value="' + name + '"' + priceAttr + '>' + label + '</option>';
+        var unitAttr = p.unit_name ? ' data-unit="' + p.unit_name + '"' : '';
+        html += '<option value="' + name + '"' + priceAttr + unitAttr + '>' + label + '</option>';
         if (currentValue && name === currentValue) {
           found = true;
         }
@@ -304,7 +312,7 @@
         '<td><select name="part_name[]" class="form-control part_name_select" data-current="" required><option value="">Select Part</option></select></td>' +
         '<td><input type="text" name="model[]" class="form-control"></td>' +
         '<td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>' +
-        '<td><input type="text" name="unit[]" class="form-control"></td>' +
+        '<td><input type="text" name="unit[]" class="form-control unit"></td>' +
         '<td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01"></td>' +
         '<td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" readonly></td>' +
         '<td><input type="text" name="item_remarks[]" class="form-control"></td>' +
@@ -332,10 +340,16 @@
     $('#po_items_table').on('change', '.part_name_select', function() {
       var row = $(this).closest('tr');
       var price = $(this).find('option:selected').data('price');
+      var unit = $(this).find('option:selected').data('unit');
       if (typeof price !== 'undefined') {
         row.find('.rate').val(price);
       } else {
         row.find('.rate').val('');
+      }
+      if (typeof unit !== 'undefined') {
+        row.find('.unit').val(unit);
+      } else {
+        row.find('.unit').val('');
       }
       recalcRow(row);
       recalcTotals();
@@ -386,6 +400,10 @@
     recalcTotals();
   })();
 </script>
+
+
+
+
 
 
 

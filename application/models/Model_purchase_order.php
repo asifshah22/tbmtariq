@@ -127,9 +127,11 @@ class Model_purchase_order extends CI_Model
         $sql = "
             SELECT tab1.product_id
                 , tab1.category_id
+                , tab1.unit_id
                 , tab1.price
                 , products.name AS product_name
                 , categories.name AS category_name
+                , units.unit_name AS unit_name
             FROM product_prices tab1
             INNER JOIN (
                 SELECT product_id, category_id, vendor_id, MAX(date_time) as max_date_time
@@ -143,6 +145,7 @@ class Model_purchase_order extends CI_Model
             INNER JOIN products ON tab1.product_id = products.id
             INNER JOIN product_category ON tab1.product_id = product_category.product_id
                 AND tab1.category_id = product_category.category_id
+            LEFT JOIN units ON units.id = tab1.unit_id
             LEFT JOIN categories ON categories.id = product_category.category_id
             WHERE tab1.is_deleted = 0
             ORDER BY products.name ASC
