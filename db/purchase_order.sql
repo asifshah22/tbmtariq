@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders_custom (
   contact_no VARCHAR(50) NULL,
   terms_of_payment VARCHAR(150) NULL,
   delivery VARCHAR(150) NULL,
+  payment_type VARCHAR(20) NULL,
   remarks VARCHAR(255) NULL,
   total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   sales_tax_percent DECIMAL(6,2) NOT NULL DEFAULT 0,

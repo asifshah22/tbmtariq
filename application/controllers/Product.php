@@ -38,6 +38,8 @@ class Product extends CI_Controller {
 
         }
 
+        $this->load->model('Model_purchase_order');
+
     }
 
 
@@ -2199,6 +2201,7 @@ class Product extends CI_Controller {
             $data['units_data'] = $this->Model_products->getUnitsData();
 
             $data['unit_data_values'] = $this->Model_products->getUnitValuesData();
+            $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdown();
 
 
 
@@ -2541,6 +2544,11 @@ class Product extends CI_Controller {
             {
 
                 $purchase_order_id = $this->db->insert_id();
+
+                $selected_po_id = $this->input->post('purchase_order_id');
+                if(!empty($selected_po_id)) {
+                    $this->Model_purchase_order->markComplete($selected_po_id);
+                }
 
                 $count_product = count($this->input->post('product'));
 

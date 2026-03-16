@@ -18,6 +18,7 @@ class Purchase_order extends CI_Controller
         }
 
         $this->load->model('Model_purchase_order');
+        $this->load->model('Model_users');
     }
 
     public function index()
@@ -81,6 +82,7 @@ class Purchase_order extends CI_Controller
         $this->form_validation->set_rules('vendor_id', 'Vendor', 'trim|required');
         $this->form_validation->set_rules('po_number', 'PO Number', 'trim|required');
         $this->form_validation->set_rules('po_date', 'PO Date', 'trim|required');
+        $this->form_validation->set_rules('payment_type', 'Payment', 'trim|required');
 
         if ($this->form_validation->run() === false) {
             $this->session->set_flashdata('error', validation_errors());
@@ -100,6 +102,7 @@ class Purchase_order extends CI_Controller
             'po_number' => $this->Model_purchase_order->generatePoNumber(),
             'po_date' => $this->input->post('po_date'),
             'delivery' => $this->input->post('delivery'),
+            'payment_type' => $this->input->post('payment_type'),
             'terms_of_payment' => $this->input->post('terms_of_payment'),
             'contact_person' => $this->input->post('contact_person'),
             'contact_no' => $this->input->post('contact_no'),
@@ -122,7 +125,7 @@ class Purchase_order extends CI_Controller
         }
 
         $this->session->set_flashdata('success', 'Purchase order created.');
-        redirect('Purchase_order/print_view/' . $order_id);
+        redirect('Purchase_order/index');
     }
 
     public function edit($order_id)
@@ -166,6 +169,7 @@ class Purchase_order extends CI_Controller
         $this->form_validation->set_rules('vendor_id', 'Vendor', 'trim|required');
         $this->form_validation->set_rules('po_number', 'PO Number', 'trim|required');
         $this->form_validation->set_rules('po_date', 'PO Date', 'trim|required');
+        $this->form_validation->set_rules('payment_type', 'Payment', 'trim|required');
 
         if ($this->form_validation->run() === false) {
             $this->session->set_flashdata('error', validation_errors());
@@ -185,6 +189,7 @@ class Purchase_order extends CI_Controller
             'po_number' => $this->input->post('po_number'),
             'po_date' => $this->input->post('po_date'),
             'delivery' => $this->input->post('delivery'),
+            'payment_type' => $this->input->post('payment_type'),
             'terms_of_payment' => $this->input->post('terms_of_payment'),
             'contact_person' => $this->input->post('contact_person'),
             'contact_no' => $this->input->post('contact_no'),
@@ -231,6 +236,7 @@ class Purchase_order extends CI_Controller
         $data['order'] = $order;
         $data['items'] = $items;
         $data['vendor'] = $vendor;
+        $data['prepared_by'] = !empty($order['created_by']) ? $this->Model_users->getUserFullName($order['created_by']) : '';
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/header_menu');

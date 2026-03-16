@@ -57,12 +57,11 @@
                   <?php endif; ?>
                 </td>
                 <td colspan="2">
-                  <span class="po-label">NTN</span><br>
-                  <?php echo !empty($vendor['ntn']) ? $vendor['ntn'] : ''; ?>
+                  <span class="po-label">NTN</span><br>5118249
                 </td>
                 <td colspan="2">
                   <span class="po-label">STRN</span><br>
-                  <?php echo !empty($vendor['strn']) ? $vendor['strn'] : ''; ?>
+                    3277876175158
                 </td>
               </tr>
               <tr class="po-tight">
@@ -139,7 +138,7 @@
                       <td style="width:25%; text-align:center;">Received By</td>
                     </tr>
                     <tr class="po-sig">
-                      <td></td>
+                      <td style="text-align:center"><?php echo !empty($prepared_by) ? $prepared_by : ""; ?></td>
                       <td></td>
                       <td></td>
                       <td></td>

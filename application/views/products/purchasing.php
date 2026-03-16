@@ -131,6 +131,34 @@
                     </div>
 
                   </div>
+                  <div class="form-group">
+                    <label class="col-sm-1 control-label">PO No</label>
+                    <div class="col-sm-11">
+                      <select class="form-control" name="purchase_order_id" id="purchase_order_id">
+                        <option value="">-- Select PO Number --</option>
+                        <?php if (!empty($po_orders)): ?>
+                          <?php foreach($po_orders as $po): ?>
+                            <?php
+                              $vendor_name = trim($po['first_name'].' '.$po['last_name']);
+                              $status_label = isset($po['status']) ? $po['status'] : '';
+                              $label_parts = array();
+                              if (!empty($po['po_number'])) {
+                                $label_parts[] = $po['po_number'];
+                              }
+                              if (!empty($vendor_name)) {
+                                $label_parts[] = $vendor_name;
+                              }
+                              if (!empty($status_label)) {
+                                $label_parts[] = $status_label;
+                              }
+                              $label = implode(' - ', $label_parts);
+                            ?>
+                            <option value="<?php echo $po['id']; ?>"><?php echo $label; ?></option>
+                          <?php endforeach; ?>
+                        <?php endif; ?>
+                      </select>
+                    </div>
+                  </div>
 
                   <div class="form-group">
 

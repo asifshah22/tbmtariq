@@ -62,6 +62,26 @@ class Model_purchase_order extends CI_Model
         return $query->result_array();
     }
 
+    public function getOrdersForDropdown()
+    {
+        $sql = "SELECT poc.id, poc.po_number, poc.status, poc.vendor_id, supplier.first_name, supplier.last_name
+                FROM purchase_orders_custom AS poc
+                LEFT JOIN supplier ON supplier.id = poc.vendor_id
+                ORDER BY poc.id DESC";
+        $query = $this->db->query($sql);
+        return $query->result_array();
+    }
+
+    public function markComplete($order_id)
+    {
+        if (!$order_id) {
+            return false;
+        }
+
+        $this->db->where('id', $order_id);
+        return $this->db->update('purchase_orders_custom', array('status' => 'Complete'));
+    }
+
     public function getOrderItems($order_id)
     {
         if (!$order_id) {

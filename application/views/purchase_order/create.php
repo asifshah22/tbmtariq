@@ -106,6 +106,17 @@
               </div>
 
               <div class="form-group">
+                <label class="col-sm-2 control-label">Payment</label>
+                <div class="col-sm-4">
+                  <?php $payment_type = isset($order['payment_type']) && $order['payment_type'] ? $order['payment_type'] : 'Cash'; ?>
+                  <select class="form-control" name="payment_type" id="payment_type">
+                    <option value="Cash" <?php echo ($payment_type === 'Cash') ? 'selected' : ''; ?>>Cash</option>
+                    <option value="Credit" <?php echo ($payment_type === 'Credit') ? 'selected' : ''; ?>>Credit</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
                 <label class="col-sm-2 control-label">Remarks</label>
                 <div class="col-sm-10">
                   <input type="text" class="form-control" name="remarks" id="remarks" value="<?php echo isset($order['remarks']) ? $order['remarks'] : ''; ?>">
@@ -257,6 +268,7 @@
         }
         $(this).data('current', '');
       });
+      initPartSelect2();
     }
 
     function loadVendorProducts(vendorId) {
@@ -384,11 +396,35 @@
 
           $('#contact_person').val(contactName);
           $('#contact_no').val(phones && phones.length ? phones[0] : '');
-          $('#remarks').val(data && data.remarks ? data.remarks : '');
         }
       });
     });
 
+
+    function initPartSelect2() {
+      $('.part_name_select').each(function() {
+        var $el = $(this);
+        if ($el.hasClass('select2-hidden-accessible')) {
+          $el.select2('destroy');
+        }
+        $el.select2({
+          width: '100%',
+          placeholder: 'Select Part',
+          allowClear: true
+        });
+      });
+    }
+
+    function initVendorSelect2() {
+      if ($('#vendor_id').hasClass('select2-hidden-accessible')) {
+        $('#vendor_id').select2('destroy');
+      }
+      $('#vendor_id').select2({
+        width: '100%',
+        placeholder: 'Select Vendor',
+        allowClear: true
+      });
+    }
     $('#mainPurchasingNav').addClass('menu-open');
     $('#purchaseOrderNav').addClass('active');
 
@@ -397,6 +433,8 @@
       loadVendorProducts(initialVendorId);
     }
 
+    initVendorSelect2();
+    initPartSelect2();
     recalcTotals();
   })();
 </script>
