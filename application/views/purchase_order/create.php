@@ -71,13 +71,20 @@
               </div>
 
               <div class="form-group">
-                <label class="col-sm-2 control-label">Status</label>
+                <label class="col-sm-2 control-label">Supply Status</label>
                 <div class="col-sm-4">
-                  <?php $status = isset($order['status']) ? $order['status'] : 'Pending'; ?>
-                  <select class="form-control" name="status">
-                    <option value="" >Choose Status</option>
-                    <option value="Supplier" <?php echo ($status === 'Supplier') ? 'selected' : ''; ?>>Supplier</option>
-                    <option value="Payment" <?php echo ($status === 'Payment') ? 'selected' : ''; ?>>Payment</option>
+                  <?php $supply_status = isset($order['supply_status']) ? $order['supply_status'] : 'Pending'; ?>
+                  <select class="form-control" name="supply_status">
+                    <option value="Pending" <?php echo ($supply_status === 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Complete" <?php echo ($supply_status === 'Complete') ? 'selected' : ''; ?>>Complete</option>
+                  </select>
+                </div>
+                <label class="col-sm-2 control-label">Payment Status</label>
+                <div class="col-sm-4">
+                  <?php $payment_status = isset($order['payment_status']) ? $order['payment_status'] : 'Pending'; ?>
+                  <select class="form-control" name="payment_status">
+                    <option value="Pending" <?php echo ($payment_status === 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Complete" <?php echo ($payment_status === 'Complete') ? 'selected' : ''; ?>>Complete</option>
                   </select>
                 </div>
               </div>
@@ -439,6 +446,7 @@
     recalcTotals();
   })();
 </script>
+
 
 
 

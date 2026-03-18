@@ -140,7 +140,8 @@
                           <?php foreach($po_orders as $po): ?>
                             <?php
                               $vendor_name = trim($po['first_name'].' '.$po['last_name']);
-                              $status_label = isset($po['status']) ? $po['status'] : '';
+                              $supply_label = isset($po['supply_status']) ? $po['supply_status'] : '';
+                              $payment_label = isset($po['payment_status']) ? $po['payment_status'] : '';
                               $label_parts = array();
                               if (!empty($po['po_number'])) {
                                 $label_parts[] = $po['po_number'];
@@ -148,8 +149,11 @@
                               if (!empty($vendor_name)) {
                                 $label_parts[] = $vendor_name;
                               }
-                              if (!empty($status_label)) {
-                                $label_parts[] = $status_label;
+                              if (!empty($supply_label)) {
+                                $label_parts[] = 'Supply: ' . $supply_label;
+                              }
+                              if (!empty($payment_label)) {
+                                $label_parts[] = 'Payment: ' . $payment_label;
                               }
                               $label = implode(' - ', $label_parts);
                             ?>
@@ -2945,3 +2949,4 @@
   }
 
 </script>
+
