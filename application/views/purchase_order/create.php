@@ -75,8 +75,9 @@
                 <div class="col-sm-4">
                   <?php $status = isset($order['status']) ? $order['status'] : 'Pending'; ?>
                   <select class="form-control" name="status">
-                    <option value="Pending" <?php echo ($status === 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                    <option value="Complete" <?php echo ($status === 'Complete') ? 'selected' : ''; ?>>Complete</option>
+                    <option value="" >Choose Status</option>
+                    <option value="Supplier" <?php echo ($status === 'Supplier') ? 'selected' : ''; ?>>Supplier</option>
+                    <option value="Payment" <?php echo ($status === 'Payment') ? 'selected' : ''; ?>>Payment</option>
                   </select>
                 </div>
               </div>

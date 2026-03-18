@@ -153,7 +153,7 @@
                               }
                               $label = implode(' - ', $label_parts);
                             ?>
-                            <option value="<?php echo $po['id']; ?>"><?php echo $label; ?></option>
+                            <option value="<?php echo $po['id']; ?>" data-vendor="<?php echo $po['vendor_id']; ?>"><?php echo $label; ?></option>
                           <?php endforeach; ?>
                         <?php endif; ?>
                       </select>
@@ -1211,6 +1211,21 @@
 
             }
 
+            var vendorId = response.data.vendor_data.id;
+            var $poSelect = $("#purchase_order_id");
+            $poSelect.val("");
+            $poSelect.find('option').each(function() {
+              if (!this.value) {
+                $(this).show();
+                return;
+              }
+              var optVendor = $(this).data('vendor');
+              if (String(optVendor) === String(vendorId)) {
+                $(this).show();
+              } else {
+                $(this).hide();
+              }
+            });
           }
 
           var table = $("#product_info_table");

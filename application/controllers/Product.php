@@ -2545,9 +2545,12 @@ class Product extends CI_Controller {
 
                 $purchase_order_id = $this->db->insert_id();
 
-                $selected_po_id = $this->input->post('purchase_order_id');
-                if(!empty($selected_po_id)) {
-                    $this->Model_purchase_order->markComplete($selected_po_id);
+                $selected_po_id = (int)$this->input->post('purchase_order_id');
+                if($selected_po_id > 0) {
+                    $updated = $this->Model_purchase_order->markComplete($selected_po_id);
+                    if($updated === false) {
+                        log_message('error', 'Failed to mark PO complete. PO ID: ' . $selected_po_id);
+                    }
                 }
 
                 $count_product = count($this->input->post('product'));
