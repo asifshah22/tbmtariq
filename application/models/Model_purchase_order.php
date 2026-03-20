@@ -72,7 +72,7 @@ class Model_purchase_order extends CI_Model
         return $query->result_array();
     }
 
-    public function markComplete($order_id)
+    public function markSupplyComplete($order_id)
     {
         if (!$order_id) {
             return false;
@@ -80,6 +80,16 @@ class Model_purchase_order extends CI_Model
 
         $this->db->where('id', $order_id);
         return $this->db->update('purchase_orders_custom', array('supply_status' => 'Complete'));
+    }
+
+    public function markPaymentComplete($order_id)
+    {
+        if (!$order_id) {
+            return false;
+        }
+
+        $this->db->where('id', $order_id);
+        return $this->db->update('purchase_orders_custom', array('payment_status' => 'Complete'));
     }
 
     public function getOrderItems($order_id)

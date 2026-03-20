@@ -2547,9 +2547,16 @@ class Product extends CI_Controller {
 
                 $selected_po_id = (int)$this->input->post('purchase_order_id');
                 if($selected_po_id > 0) {
-                    $updated = $this->Model_purchase_order->markComplete($selected_po_id);
-                    if($updated === false) {
-                        log_message('error', 'Failed to mark PO complete. PO ID: ' . $selected_po_id);
+                    if($total_paid > 0) {
+                        $updated = $this->Model_purchase_order->markPaymentComplete($selected_po_id);
+                        if($updated === false) {
+                            log_message('error', 'Failed to mark PO payment complete. PO ID: ' . $selected_po_id);
+                        }
+                    } else {
+                        $updated = $this->Model_purchase_order->markSupplyComplete($selected_po_id);
+                        if($updated === false) {
+                            log_message('error', 'Failed to mark PO supply complete. PO ID: ' . $selected_po_id);
+                        }
                     }
                 }
 
