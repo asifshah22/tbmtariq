@@ -105,11 +105,13 @@ class Model_purchase_order extends CI_Model
 
         $link = $this->getPurchasingLinkField();
         if (!$link) {
+            log_message('error', 'PO remaining update: No purchasing link field detected. PO ID: ' . $po_id);
             return null;
         }
 
         $po_number = $this->getPoNumber($po_id);
         if (!$po_number) {
+            log_message('error', 'PO remaining update: PO number missing. PO ID: ' . $po_id);
             return null;
         }
 
@@ -119,20 +121,27 @@ class Model_purchase_order extends CI_Model
 
         $ordered_items = $this->getOrderItems($po_id);
         if (empty($ordered_items)) {
+            log_message('error', 'PO remaining update: No ordered items found. PO ID: ' . $po_id);
             return null;
         }
 
         $link_value = $this->getPurchasingLinkValue($link, $po_number, $po_id);
         if ($link_value === null || $link_value === '') {
+            log_message('error', 'PO remaining update: Link value empty. PO ID: ' . $po_id . ' Link: ' . json_encode($link));
             return null;
         }
 
         $purchased_totals = $this->getPurchasedTotalsByProductId($link_value, $link);
+        log_message('error', 'PO remaining update: Link=' . json_encode($link) . ' LinkValue=' . $link_value . ' PurchasedTotals=' . json_encode($purchased_totals));
         $ordered_totals = array();
         foreach ($ordered_items as $item) {
             $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
             if ($product_id <= 0 && !empty($item['part_name'])) {
                 $product_id = (int)$this->getProductIdByName($item['part_name']);
+                if ($product_id > 0 && !empty($item['id'])) {
+                    $this->db->where('id', (int)$item['id']);
+                    $this->db->update('purchase_order_items_custom', array('product_id' => $product_id));
+                }
             }
             $ordered_qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
             if ($ordered_qty <= 0 || $product_id <= 0) {
@@ -143,6 +152,8 @@ class Model_purchase_order extends CI_Model
             }
             $ordered_totals[$product_id] += $ordered_qty;
         }
+
+        log_message('error', 'PO remaining update: OrderedTotals=' . json_encode($ordered_totals));
 
         $this->updateRemainingQuantities($po_id, $ordered_items, $purchased_totals);
 
@@ -188,6 +199,10 @@ class Model_purchase_order extends CI_Model
             $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
             if ($product_id <= 0 && !empty($item['part_name'])) {
                 $product_id = (int)$this->getProductIdByName($item['part_name']);
+                if ($product_id > 0 && !empty($item['id'])) {
+                    $this->db->where('id', (int)$item['id']);
+                    $this->db->update('purchase_order_items_custom', array('product_id' => $product_id));
+                }
             }
             $ordered_qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
             if ($ordered_qty <= 0 || $product_id <= 0) {
