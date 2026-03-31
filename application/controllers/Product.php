@@ -2545,21 +2545,6 @@ class Product extends CI_Controller {
 
                 $purchase_order_id = $this->db->insert_id();
 
-                $selected_po_id = (int)$this->input->post('purchase_order_id');
-                if($selected_po_id > 0) {
-                    if($total_paid > 0) {
-                        $updated = $this->Model_purchase_order->markPaymentComplete($selected_po_id);
-                        if($updated === false) {
-                            log_message('error', 'Failed to mark PO payment complete. PO ID: ' . $selected_po_id);
-                        }
-                    } else {
-                        $updated = $this->Model_purchase_order->markSupplyComplete($selected_po_id);
-                        if($updated === false) {
-                            log_message('error', 'Failed to mark PO supply complete. PO ID: ' . $selected_po_id);
-                        }
-                    }
-                }
-
                 $count_product = count($this->input->post('product'));
 
                 for($x = 0; $x < $count_product; $x++)
@@ -2667,6 +2652,21 @@ class Product extends CI_Controller {
 
 
                 }//end for items
+
+                $selected_po_id = (int)$this->input->post('purchase_order_id');
+                if($selected_po_id > 0) {
+                    if($total_paid > 0) {
+                        $updated = $this->Model_purchase_order->markPaymentComplete($selected_po_id);
+                        if($updated === false) {
+                            log_message('error', 'Failed to mark PO payment complete. PO ID: ' . $selected_po_id);
+                        }
+                    }
+
+                    $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasing($selected_po_id, $purchase_order_id);
+                    if($supply_update === null) {
+                        log_message('error', 'Failed to update PO supply status. PO ID: ' . $selected_po_id . ', Purchase Order ID: ' . $purchase_order_id);
+                    }
+                }
 
 
 
