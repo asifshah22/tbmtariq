@@ -173,6 +173,54 @@ class Model_purchase_order extends CI_Model
         return $complete;
     }
 
+    public function updatePaymentStatusFromPurchasing($po_id, $purchase_order_id = null)
+    {
+        if (!$po_id) {
+            return null;
+        }
+
+        $link = $this->getPurchasingLinkField();
+        if (!$link) {
+            log_message('error', 'PO payment update: No purchasing link field detected. PO ID: ' . $po_id);
+            return null;
+        }
+
+        $po_number = $this->getPoNumber($po_id);
+        if (!$po_number) {
+            log_message('error', 'PO payment update: PO number missing. PO ID: ' . $po_id);
+            return null;
+        }
+
+        if ($purchase_order_id) {
+            $this->linkPurchasingToPoAll($purchase_order_id, $po_number, $po_id);
+        }
+
+        $link_value = $this->getPurchasingLinkValue($link, $po_number, $po_id);
+        if ($link_value === null || $link_value === '') {
+            log_message('error', 'PO payment update: Link value empty. PO ID: ' . $po_id . ' Link: ' . json_encode($link));
+            return null;
+        }
+
+        $order = $this->getOrder($po_id);
+        if (!$order || !isset($order['grand_total'])) {
+            log_message('error', 'PO payment update: Grand total missing. PO ID: ' . $po_id);
+            return null;
+        }
+
+        $grand_total = (float)$order['grand_total'];
+        $total_paid = (float)$this->getPurchasedTotalPaid($link_value, $link);
+
+        if ($grand_total > 0 && $total_paid + 1e-9 >= $grand_total) {
+            $updated = $this->markPaymentComplete($po_id);
+            if ($updated === false) {
+                log_message('error', 'PO payment update: Failed to mark payment complete. PO ID: ' . $po_id);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
     public function getOrderItems($order_id)
     {
         if (!$order_id) {
@@ -259,6 +307,20 @@ class Model_purchase_order extends CI_Model
         }
 
         return $this->updateSupplyStatusFromPurchasing($po_id, $purchase_order_id);
+    }
+
+    public function updatePaymentStatusFromPurchasingOrder($purchase_order_id)
+    {
+        if (!$purchase_order_id) {
+            return null;
+        }
+
+        $po_id = $this->getCustomPoIdFromPurchasing($purchase_order_id);
+        if (!$po_id) {
+            return null;
+        }
+
+        return $this->updatePaymentStatusFromPurchasing($po_id, $purchase_order_id);
     }
 
     private function getCustomPoIdFromPurchasing($purchase_order_id)
@@ -425,6 +487,32 @@ class Model_purchase_order extends CI_Model
         }
 
         return $totals;
+    }
+
+    private function getPurchasedTotalPaid($link_value, $link)
+    {
+        if (empty($link['table']) || empty($link['field'])) {
+            return 0.0;
+        }
+
+        if ($link['table'] === 'purchase_orders') {
+            $sql = "SELECT SUM(total_paid) AS total_paid
+                    FROM purchase_orders
+                    WHERE " . $link['field'] . " = ?";
+            $query = $this->db->query($sql, array($link_value));
+        } else {
+            $sql = "SELECT SUM(purchase_orders.total_paid) AS total_paid
+                    FROM purchase_orders
+                    WHERE purchase_orders.id IN (
+                        SELECT DISTINCT purchase_order_id
+                        FROM purchase_items
+                        WHERE " . $link['field'] . " = ?
+                    )";
+            $query = $this->db->query($sql, array($link_value));
+        }
+
+        $row = $query ? $query->row_array() : null;
+        return ($row && isset($row['total_paid'])) ? (float)$row['total_paid'] : 0.0;
     }
 
     private function getPurchasingLinkValue($link, $po_number, $po_id)

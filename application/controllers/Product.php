@@ -2655,11 +2655,9 @@ class Product extends CI_Controller {
 
                 $selected_po_id = (int)$this->input->post('purchase_order_id');
                 if($selected_po_id > 0) {
-                    if($total_paid > 0) {
-                        $updated = $this->Model_purchase_order->markPaymentComplete($selected_po_id);
-                        if($updated === false) {
-                            log_message('error', 'Failed to mark PO payment complete. PO ID: ' . $selected_po_id);
-                        }
+                    $payment_update = $this->Model_purchase_order->updatePaymentStatusFromPurchasing($selected_po_id, $purchase_order_id);
+                    if($payment_update === null) {
+                        log_message('error', 'Failed to update PO payment status. PO ID: ' . $selected_po_id . ', Purchase Order ID: ' . $purchase_order_id);
                     }
 
                     $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasing($selected_po_id, $purchase_order_id);
@@ -3625,6 +3623,10 @@ class Product extends CI_Controller {
                         $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasingOrder($order_id);
                         if($supply_update === null) {
                             log_message('error', 'Failed to update PO supply status after purchasing update. Purchase Order ID: ' . $order_id);
+                        }
+                        $payment_update = $this->Model_purchase_order->updatePaymentStatusFromPurchasingOrder($order_id);
+                        if($payment_update === null) {
+                            log_message('error', 'Failed to update PO payment status after purchasing update. Purchase Order ID: ' . $order_id);
                         }
 
                         $this->session->set_flashdata('success', 'Successfully updated');
