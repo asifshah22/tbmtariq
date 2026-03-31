@@ -232,6 +232,90 @@ class Model_purchase_order extends CI_Model
         }
     }
 
+    public function updateSupplyStatusFromPurchasingOrder($purchase_order_id)
+    {
+        if (!$purchase_order_id) {
+            return null;
+        }
+
+        $po_id = $this->getCustomPoIdFromPurchasing($purchase_order_id);
+        if (!$po_id) {
+            return null;
+        }
+
+        return $this->updateSupplyStatusFromPurchasing($po_id, $purchase_order_id);
+    }
+
+    private function getCustomPoIdFromPurchasing($purchase_order_id)
+    {
+        if (!$purchase_order_id) {
+            return null;
+        }
+
+        $link = $this->getPurchasingLinkField();
+        if (!$link || empty($link['table']) || empty($link['field'])) {
+            return null;
+        }
+
+        $link_value = null;
+        if ($link['table'] === 'purchase_orders') {
+            $sql = "SELECT " . $link['field'] . " AS link_value FROM purchase_orders WHERE id = ? LIMIT 1";
+            $query = $this->db->query($sql, array($purchase_order_id));
+            $row = $query ? $query->row_array() : null;
+            if ($row && isset($row['link_value'])) {
+                $link_value = $row['link_value'];
+            }
+        } else {
+            $sql = "SELECT " . $link['field'] . " AS link_value FROM purchase_items WHERE purchase_order_id = ? AND " . $link['field'] . " IS NOT NULL AND " . $link['field'] . " != '' LIMIT 1";
+            $query = $this->db->query($sql, array($purchase_order_id));
+            $row = $query ? $query->row_array() : null;
+            if ($row && isset($row['link_value'])) {
+                $link_value = $row['link_value'];
+            }
+        }
+
+        if ($link_value === null || $link_value === '') {
+            return null;
+        }
+
+        if ($link['field'] === 'purchase_order_custom_id' || $link['field'] === 'po_id') {
+            return (int)$link_value;
+        }
+
+        $sql = "SELECT id FROM purchase_orders_custom WHERE po_number = ? LIMIT 1";
+        $query = $this->db->query($sql, array($link_value));
+        $row = $query ? $query->row_array() : null;
+        return ($row && isset($row['id'])) ? (int)$row['id'] : null;
+    }
+
+    public function getPurchasingLinkFieldInfo()
+    {
+        return $this->getPurchasingLinkField();
+    }
+
+    public function getPurchasingLinkValueByPurchaseOrderId($purchase_order_id)
+    {
+        if (!$purchase_order_id) {
+            return null;
+        }
+
+        $link = $this->getPurchasingLinkField();
+        if (!$link || empty($link['table']) || empty($link['field'])) {
+            return null;
+        }
+
+        if ($link['table'] === 'purchase_orders') {
+            $sql = "SELECT " . $link['field'] . " AS link_value FROM purchase_orders WHERE id = ? LIMIT 1";
+            $query = $this->db->query($sql, array($purchase_order_id));
+            $row = $query ? $query->row_array() : null;
+            return ($row && isset($row['link_value'])) ? $row['link_value'] : null;
+        }
+
+        $sql = "SELECT " . $link['field'] . " AS link_value FROM purchase_items WHERE purchase_order_id = ? AND " . $link['field'] . " IS NOT NULL AND " . $link['field'] . " != '' LIMIT 1";
+        $query = $this->db->query($sql, array($purchase_order_id));
+        $row = $query ? $query->row_array() : null;
+        return ($row && isset($row['link_value'])) ? $row['link_value'] : null;
+    }
     private function getPurchasingLinkField()
     {
         if ($this->db->field_exists('po_number_custom', 'purchase_orders')) {
@@ -479,6 +563,8 @@ class Model_purchase_order extends CI_Model
         return $query->result_array();
     }
 }
+
+
 
 
 

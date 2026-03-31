@@ -3086,7 +3086,12 @@ class Product extends CI_Controller {
                     $this->db->where('id', $order_id);
 
                     $update = $this->db->update('purchase_orders', $data);
-
+                    $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
+                    $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
+                    if ($po_link && $po_link_value !== null && $po_link['table'] === 'purchase_orders') {
+                        $this->db->where('id', $order_id);
+                        $this->db->update('purchase_orders', array($po_link['field'] => $po_link_value));
+                    }
                     // remove the existing items
 
                     // subtract from stock also
@@ -3218,6 +3223,10 @@ class Product extends CI_Controller {
                                 'unit_id' => $this->input->post('select_unit')[$x]
 
                             );
+
+                            if ($po_link && $po_link_value !== null && $po_link['table'] === 'purchase_items') {
+                                $items[$po_link['field']] = $po_link_value;
+                            }
 
                             $insert = $this->db->insert('purchase_items', $items);
 
@@ -16710,3 +16719,10 @@ public function getSalePriceDataById()
 
 
 }
+
+
+
+
+
+
+
