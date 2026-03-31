@@ -2268,6 +2268,61 @@ class Product extends CI_Controller {
     }
 
 
+    public function getPurchaseOrderItems()
+
+    {
+
+        if(!in_array('createPurchasing', $this->permission)) {
+            echo json_encode(array('success' => false, 'message' => 'Access denied'));
+            return;
+        }
+
+        $po_id = (int)$this->input->post('po_id');
+        if(!$po_id) {
+            echo json_encode(array('success' => false, 'message' => 'Missing PO ID'));
+            return;
+        }
+
+        $order = $this->Model_purchase_order->getOrder($po_id);
+        if(!$order) {
+            echo json_encode(array('success' => false, 'message' => 'PO not found'));
+            return;
+        }
+
+        $items = $this->Model_purchase_order->getOrderItems($po_id);
+        $normalized = array();
+        foreach ($items as $item) {
+            $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
+            $part_name = isset($item['part_name']) ? trim($item['part_name']) : '';
+            if ($product_id <= 0 && $part_name !== '') {
+                $product_id = (int)$this->Model_purchase_order->getProductIdByName($part_name);
+            }
+
+            $qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
+
+            if ($qty <= 0) {
+                continue;
+            }
+
+            $normalized[] = array(
+                'product_id' => $product_id,
+                'part_name' => $part_name,
+                'qty' => $qty,
+                'unit' => isset($item['unit']) ? $item['unit'] : '',
+                'rate' => isset($item['rate']) ? (float)$item['rate'] : 0.0,
+                'amount' => isset($item['amount']) ? (float)$item['amount'] : 0.0
+            );
+        }
+
+        echo json_encode(array(
+            'success' => true,
+            'order' => array('vendor_id' => isset($order['vendor_id']) ? (int)$order['vendor_id'] : 0),
+            'items' => $normalized
+        ));
+
+    }
+
+
 
     public function getProductPriceDataById()
 
