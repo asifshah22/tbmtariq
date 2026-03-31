@@ -72,6 +72,7 @@ class Model_purchase_order extends CI_Model
         $sql = "SELECT poc.id, poc.po_number, poc.supply_status, poc.payment_status, poc.vendor_id, supplier.first_name, supplier.last_name
                 FROM purchase_orders_custom AS poc
                 LEFT JOIN supplier ON supplier.id = poc.vendor_id
+                WHERE IFNULL(poc.supply_status, '') != 'Complete'
                 ORDER BY poc.id DESC";
         $query = $this->db->query($sql);
         return $query->result_array();
