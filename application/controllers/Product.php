@@ -3622,6 +3622,11 @@ class Product extends CI_Controller {
 
                         // end
 
+                        $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasingOrder($order_id);
+                        if($supply_update === null) {
+                            log_message('error', 'Failed to update PO supply status after purchasing update. Purchase Order ID: ' . $order_id);
+                        }
+
                         $this->session->set_flashdata('success', 'Successfully updated');
 
                         redirect('/Product/view_order_items/'.$order_id, 'refresh');

@@ -151,6 +151,8 @@ class Purchase_order extends CI_Controller
         $data['vendor_data'] = $this->Model_supplier->getSupplierData();
         $data['is_edit'] = true;
         $data['order'] = $order;
+        // Refresh remaining_qty before showing edit form
+        $this->Model_purchase_order->updateSupplyStatusFromPurchasing($order_id);
         $data['items'] = $this->Model_purchase_order->getOrderItems($order_id);
         $data['action_url'] = base_url() . 'index.php/Purchase_order/update/' . $order_id;
 
