@@ -211,6 +211,8 @@ class Purchase_order extends CI_Controller
             return;
         }
 
+        $this->Model_purchase_order->updateSupplyStatusFromPurchasing($order_id);
+
         $this->session->set_flashdata('success', 'Purchase order updated.');
         redirect('Purchase_order/index');
     }
@@ -336,6 +338,7 @@ class Purchase_order extends CI_Controller
         $items = array();
 
         $part_names = $this->input->post('part_name');
+        $product_ids = $this->input->post('product_id');
         $models = $this->input->post('model');
         $qtys = $this->input->post('qty');
         $units = $this->input->post('unit');
@@ -354,8 +357,17 @@ class Purchase_order extends CI_Controller
                 continue;
             }
 
+            $product_id = 0;
+            if (is_array($product_ids) && isset($product_ids[$i])) {
+                $product_id = (int)$product_ids[$i];
+            }
+            if ($product_id <= 0) {
+                $product_id = (int)$this->Model_purchase_order->getProductIdByName($part_name);
+            }
+
             $items[] = array(
                 'part_name' => $part_name,
+                'product_id' => $product_id,
                 'model' => isset($models[$i]) ? trim($models[$i]) : '',
                 'qty' => isset($qtys[$i]) ? floatval($qtys[$i]) : 0,
                 'unit' => isset($units[$i]) ? trim($units[$i]) : '',
@@ -368,4 +380,6 @@ class Purchase_order extends CI_Controller
         return $items;
     }
 }
+
+
 

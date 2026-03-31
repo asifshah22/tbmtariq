@@ -141,6 +141,7 @@
                       <th>Parts Name</th>
                       <th>Model</th>
                       <th style="width:8%">Qty</th>
+                      <th style="width:8%">Remaining</th>
                       <th style="width:8%">Unit</th>
                       <th style="width:10%">Rate</th>
                       <th style="width:12%">Amount</th>
@@ -156,6 +157,7 @@
                         <tr id="row_<?php echo $row_index; ?>">
                           <td><?php echo $row_index; ?></td>
                           <td>
+                            <input type="hidden" name="product_id[]" class="product_id" value="<?php echo isset($item['product_id']) ? (int)$item['product_id'] : 0; ?>">
                             <select name="part_name[]" class="form-control part_name_select" data-current="<?php echo htmlspecialchars($item['part_name'], ENT_QUOTES); ?>" required>
                               <option value="">Select Part</option>
                               <?php if (!empty($item['part_name'])): ?>
@@ -165,6 +167,7 @@
                           </td>
                           <td><input type="text" name="model[]" class="form-control" value="<?php echo $item['model']; ?>"></td>
                           <td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01" value="<?php echo $item['qty']; ?>"></td>
+                          <td><input type="number" class="form-control remaining_qty" value="<?php echo isset($item['remaining_qty']) ? $item['remaining_qty'] : $item['qty']; ?>" readonly data-auto="0"></td>
                           <td><input type="text" name="unit[]" class="form-control unit" value="<?php echo $item['unit']; ?>"></td>
                           <td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01" value="<?php echo $item['rate']; ?>"></td>
                           <td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" value="<?php echo $item['amount']; ?>" readonly></td>
@@ -177,12 +180,14 @@
                       <tr id="row_1">
                         <td>1</td>
                         <td>
+                          <input type="hidden" name="product_id[]" class="product_id" value="0">
                           <select name="part_name[]" class="form-control part_name_select" data-current="" required>
                             <option value="">Select Part</option>
                           </select>
                         </td>
                         <td><input type="text" name="model[]" class="form-control"></td>
                         <td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>
+                        <td><input type="number" class="form-control remaining_qty" value="0" readonly data-auto="1"></td>
                         <td><input type="text" name="unit[]" class="form-control unit"></td>
                         <td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01"></td>
                         <td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" readonly></td>
@@ -256,7 +261,8 @@
         var price = (p.price !== null && typeof p.price !== 'undefined') ? p.price : '';
         var priceAttr = price !== '' ? ' data-price="' + price + '"' : '';
         var unitAttr = p.unit_name ? ' data-unit="' + p.unit_name + '"' : '';
-        html += '<option value="' + name + '"' + priceAttr + unitAttr + '>' + label + '</option>';
+        var productIdAttr = p.product_id ? ' data-product-id="' + p.product_id + '"' : '';
+        html += '<option value="' + name + '"' + productIdAttr + priceAttr + unitAttr + '>' + label + '</option>';
         if (currentValue && name === currentValue) {
           found = true;
         }
@@ -275,6 +281,11 @@
           $(this).val(current);
         }
         $(this).data('current', '');
+        var row = $(this).closest('tr');
+        var productId = $(this).find('option:selected').data('product-id');
+        if (typeof productId !== 'undefined') {
+          row.find('.product_id').val(productId);
+        }
       });
       initPartSelect2();
     }
@@ -307,6 +318,10 @@
       var rate = parseFloat(row.find('.rate').val()) || 0;
       var amount = qty * rate;
       row.find('.amount').val(amount.toFixed(2));
+      var remainingInput = row.find('.remaining_qty');
+      if (remainingInput.length && String(remainingInput.data('auto')) === '1') {
+        remainingInput.val(qty.toFixed(2));
+      }
     }
 
     function recalcTotals() {
@@ -329,9 +344,10 @@
       rowCount++;
       var row = '<tr id="row_' + rowCount + '">' +
         '<td>' + rowCount + '</td>' +
-        '<td><select name="part_name[]" class="form-control part_name_select" data-current="" required><option value="">Select Part</option></select></td>' +
+        '<td><input type="hidden" name="product_id[]" class="product_id" value="0"><select name="part_name[]" class="form-control part_name_select" data-current="" required><option value="">Select Part</option></select></td>' +
         '<td><input type="text" name="model[]" class="form-control"></td>' +
         '<td><input type="number" name="qty[]" class="form-control qty" min="0" step="0.01"></td>' +
+        '<td><input type="number" class="form-control remaining_qty" value="0" readonly data-auto="1"></td>' +
         '<td><input type="text" name="unit[]" class="form-control unit"></td>' +
         '<td><input type="number" name="rate[]" class="form-control rate" min="0" step="0.01"></td>' +
         '<td><input type="number" name="amount[]" class="form-control amount" min="0" step="0.01" readonly></td>' +
@@ -361,6 +377,7 @@
       var row = $(this).closest('tr');
       var price = $(this).find('option:selected').data('price');
       var unit = $(this).find('option:selected').data('unit');
+      var productId = $(this).find('option:selected').data('product-id');
       if (typeof price !== 'undefined') {
         row.find('.rate').val(price);
       } else {
@@ -370,6 +387,11 @@
         row.find('.unit').val(unit);
       } else {
         row.find('.unit').val('');
+      }
+      if (typeof productId !== 'undefined') {
+        row.find('.product_id').val(productId);
+      } else {
+        row.find('.product_id').val(0);
       }
       recalcRow(row);
       recalcTotals();
@@ -446,6 +468,9 @@
     recalcTotals();
   })();
 </script>
+
+
+
 
 
 

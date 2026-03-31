@@ -20,6 +20,11 @@ class Model_purchase_order extends CI_Model
 
         foreach ($items as $item) {
             $item['purchase_order_id'] = $order_id;
+            if ($this->db->field_exists('remaining_qty', 'purchase_order_items_custom')) {
+                if (!isset($item['remaining_qty'])) {
+                    $item['remaining_qty'] = isset($item['qty']) ? (float)$item['qty'] : 0.0;
+                }
+            }
             $this->db->insert('purchase_order_items_custom', $item);
         }
 
@@ -122,23 +127,28 @@ class Model_purchase_order extends CI_Model
             return null;
         }
 
-        $purchased_totals = $this->getPurchasedTotalsByName($link_value, $link);
+        $purchased_totals = $this->getPurchasedTotalsByProductId($link_value, $link);
         $ordered_totals = array();
         foreach ($ordered_items as $item) {
-            $name = isset($item['part_name']) ? $this->normalizeItemName($item['part_name']) : '';
+            $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
+            if ($product_id <= 0 && !empty($item['part_name'])) {
+                $product_id = (int)$this->getProductIdByName($item['part_name']);
+            }
             $ordered_qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
-            if ($ordered_qty <= 0 || $name === '') {
+            if ($ordered_qty <= 0 || $product_id <= 0) {
                 continue;
             }
-            if (!isset($ordered_totals[$name])) {
-                $ordered_totals[$name] = 0.0;
+            if (!isset($ordered_totals[$product_id])) {
+                $ordered_totals[$product_id] = 0.0;
             }
-            $ordered_totals[$name] += $ordered_qty;
+            $ordered_totals[$product_id] += $ordered_qty;
         }
 
+        $this->updateRemainingQuantities($po_id, $ordered_items, $purchased_totals);
+
         $complete = true;
-        foreach ($ordered_totals as $name => $ordered_qty_total) {
-            $purchased_qty = isset($purchased_totals[$name]) ? (float)$purchased_totals[$name] : 0.0;
+        foreach ($ordered_totals as $product_id => $ordered_qty_total) {
+            $purchased_qty = isset($purchased_totals[$product_id]) ? (float)$purchased_totals[$product_id] : 0.0;
             if ($purchased_qty + 1e-9 < $ordered_qty_total) {
                 $complete = false;
                 break;
@@ -161,6 +171,65 @@ class Model_purchase_order extends CI_Model
         $sql = 'SELECT * FROM purchase_order_items_custom WHERE purchase_order_id = ? ORDER BY id ASC';
         $query = $this->db->query($sql, array($order_id));
         return $query->result_array();
+    }
+
+    private function updateRemainingQuantities($po_id, $ordered_items, $purchased_totals)
+    {
+        if (!$po_id) {
+            return;
+        }
+
+        if (!$this->db->field_exists('remaining_qty', 'purchase_order_items_custom')) {
+            return;
+        }
+
+        $total_ordered_by_product = array();
+        foreach ($ordered_items as $item) {
+            $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
+            if ($product_id <= 0 && !empty($item['part_name'])) {
+                $product_id = (int)$this->getProductIdByName($item['part_name']);
+            }
+            $ordered_qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
+            if ($ordered_qty <= 0 || $product_id <= 0) {
+                continue;
+            }
+            if (!isset($total_ordered_by_product[$product_id])) {
+                $total_ordered_by_product[$product_id] = 0.0;
+            }
+            $total_ordered_by_product[$product_id] += $ordered_qty;
+        }
+
+        $remaining_by_product = array();
+        foreach ($total_ordered_by_product as $product_id => $ordered_qty) {
+            $purchased_qty = isset($purchased_totals[$product_id]) ? (float)$purchased_totals[$product_id] : 0.0;
+            $remaining_by_product[$product_id] = max(0.0, $ordered_qty - $purchased_qty);
+        }
+
+        foreach ($ordered_items as $item) {
+            $item_id = isset($item['id']) ? (int)$item['id'] : 0;
+            if ($item_id <= 0) {
+                continue;
+            }
+
+            $product_id = isset($item['product_id']) ? (int)$item['product_id'] : 0;
+            if ($product_id <= 0 && !empty($item['part_name'])) {
+                $product_id = (int)$this->getProductIdByName($item['part_name']);
+            }
+            $ordered_qty = isset($item['qty']) ? (float)$item['qty'] : 0.0;
+            if ($ordered_qty <= 0 || $product_id <= 0) {
+                continue;
+            }
+
+            $remaining_for_product = isset($remaining_by_product[$product_id]) ? (float)$remaining_by_product[$product_id] : 0.0;
+            $remaining_for_item = $remaining_for_product;
+            if ($remaining_for_item > $ordered_qty) {
+                $remaining_for_item = $ordered_qty;
+            }
+            $remaining_by_product[$product_id] = max(0.0, $remaining_for_product - $remaining_for_item);
+
+            $this->db->where('id', $item_id);
+            $this->db->update('purchase_order_items_custom', array('remaining_qty' => $remaining_for_item));
+        }
     }
 
     private function getPurchasingLinkField()
@@ -224,7 +293,7 @@ class Model_purchase_order extends CI_Model
         }
     }
 
-    private function getPurchasedTotalsByName($link_value, $link)
+    private function getPurchasedTotalsByProductId($link_value, $link)
     {
         $totals = array();
 
@@ -233,29 +302,27 @@ class Model_purchase_order extends CI_Model
         }
 
         if ($link['table'] === 'purchase_orders') {
-            $sql = "SELECT products.name AS product_name, SUM(purchase_items.qty) AS qty
+            $sql = "SELECT purchase_items.product_id AS product_id, SUM(purchase_items.qty) AS qty
                     FROM purchase_orders
                     INNER JOIN purchase_items ON purchase_items.purchase_order_id = purchase_orders.id
-                    INNER JOIN products ON products.id = purchase_items.product_id
                     WHERE purchase_orders.".$link['field']." = ?
-                    GROUP BY products.name";
+                    GROUP BY purchase_items.product_id";
             $query = $this->db->query($sql, array($link_value));
         } else {
-            $sql = "SELECT products.name AS product_name, SUM(purchase_items.qty) AS qty
+            $sql = "SELECT purchase_items.product_id AS product_id, SUM(purchase_items.qty) AS qty
                     FROM purchase_items
-                    INNER JOIN products ON products.id = purchase_items.product_id
                     WHERE purchase_items.".$link['field']." = ?
-                    GROUP BY products.name";
+                    GROUP BY purchase_items.product_id";
             $query = $this->db->query($sql, array($link_value));
         }
 
         $rows = $query ? $query->result_array() : array();
         foreach ($rows as $row) {
-            $name = isset($row['product_name']) ? $this->normalizeItemName($row['product_name']) : '';
-            if ($name === '') {
+            $product_id = isset($row['product_id']) ? (int)$row['product_id'] : 0;
+            if ($product_id <= 0) {
                 continue;
             }
-            $totals[$name] = isset($row['qty']) ? (float)$row['qty'] : 0.0;
+            $totals[$product_id] = isset($row['qty']) ? (float)$row['qty'] : 0.0;
         }
 
         return $totals;
@@ -291,6 +358,26 @@ class Model_purchase_order extends CI_Model
         return strtolower($name);
     }
 
+    public function getProductIdByName($name)
+    {
+        $name = trim((string)$name);
+        if ($name === '') {
+            return 0;
+        }
+
+        $sql = "SELECT id FROM products WHERE name = ? LIMIT 1";
+        $query = $this->db->query($sql, array($name));
+        $row = $query ? $query->row_array() : null;
+        if ($row && isset($row['id'])) {
+            return (int)$row['id'];
+        }
+
+        $sql = "SELECT id FROM products WHERE LOWER(name) = LOWER(?) LIMIT 1";
+        $query = $this->db->query($sql, array($name));
+        $row = $query ? $query->row_array() : null;
+        return ($row && isset($row['id'])) ? (int)$row['id'] : 0;
+    }
+
     private function getPoNumber($po_id)
     {
         if (!$po_id) {
@@ -321,6 +408,11 @@ class Model_purchase_order extends CI_Model
 
         foreach ($items as $item) {
             $item['purchase_order_id'] = $order_id;
+            if ($this->db->field_exists('remaining_qty', 'purchase_order_items_custom')) {
+                if (!isset($item['remaining_qty'])) {
+                    $item['remaining_qty'] = isset($item['qty']) ? (float)$item['qty'] : 0.0;
+                }
+            }
             $this->db->insert('purchase_order_items_custom', $item);
         }
 
@@ -387,3 +479,7 @@ class Model_purchase_order extends CI_Model
         return $query->result_array();
     }
 }
+
+
+
+
