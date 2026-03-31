@@ -108,7 +108,7 @@
 
                </div>
 
-               <div class="form-group">
+              <div class="form-group">
 
                 <label class="col-sm-1 control-label">Name</label>
 
@@ -120,6 +120,41 @@
 
                 </div>
 
+              </div>
+
+              <div class="form-group">
+                <label class="col-sm-1 control-label">PO No</label>
+                <div class="col-sm-11">
+                  <select class="form-control" name="purchase_order_id" id="purchase_order_id">
+                    <option value="">-- Select PO Number --</option>
+                    <?php if (!empty($po_orders)): ?>
+                      <?php foreach($po_orders as $po): ?>
+                        <?php if ((string)$po['vendor_id'] !== (string)$vendor_data['id']) { continue; } ?>
+                        <?php
+                          $vendor_name = trim($po['first_name'].' '.$po['last_name']);
+                          $supply_label = isset($po['supply_status']) ? $po['supply_status'] : '';
+                          $payment_label = isset($po['payment_status']) ? $po['payment_status'] : '';
+                          $label_parts = array();
+                          if (!empty($po['po_number'])) {
+                            $label_parts[] = $po['po_number'];
+                          }
+                          if (!empty($vendor_name)) {
+                            $label_parts[] = $vendor_name;
+                          }
+                          if (!empty($supply_label)) {
+                            $label_parts[] = 'Supply: ' . $supply_label;
+                          }
+                          if (!empty($payment_label)) {
+                            $label_parts[] = 'Payment: ' . $payment_label;
+                          }
+                          $label = implode(' - ', $label_parts);
+                          $selected = (!empty($selected_po_id) && (int)$selected_po_id === (int)$po['id']) ? 'selected' : '';
+                        ?>
+                        <option value="<?php echo $po['id']; ?>" <?php echo $selected; ?>><?php echo $label; ?></option>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                  </select>
+                </div>
               </div>
 
               <div class="form-group" id="remaining_opening_balance_div">

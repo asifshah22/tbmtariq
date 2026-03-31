@@ -3139,6 +3139,7 @@ class Product extends CI_Controller {
                     $this->db->where('id', $order_id);
 
                     $update = $this->db->update('purchase_orders', $data);
+                    $selected_po_id = (int)$this->input->post('purchase_order_id');
                     $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
                     $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
                     if ($po_link && $po_link_value !== null && $po_link['table'] === 'purchase_orders') {
@@ -3675,13 +3676,24 @@ class Product extends CI_Controller {
 
                         // end
 
-                        $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasingOrder($order_id);
-                        if($supply_update === null) {
-                            log_message('error', 'Failed to update PO supply status after purchasing update. Purchase Order ID: ' . $order_id);
-                        }
-                        $payment_update = $this->Model_purchase_order->updatePaymentStatusFromPurchasingOrder($order_id);
-                        if($payment_update === null) {
-                            log_message('error', 'Failed to update PO payment status after purchasing update. Purchase Order ID: ' . $order_id);
+                        if($selected_po_id > 0) {
+                            $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasing($selected_po_id, $order_id);
+                            if($supply_update === null) {
+                                log_message('error', 'Failed to update PO supply status after purchasing update. PO ID: ' . $selected_po_id . ' Purchase Order ID: ' . $order_id);
+                            }
+                            $payment_update = $this->Model_purchase_order->updatePaymentStatusFromPurchasing($selected_po_id, $order_id);
+                            if($payment_update === null) {
+                                log_message('error', 'Failed to update PO payment status after purchasing update. PO ID: ' . $selected_po_id . ' Purchase Order ID: ' . $order_id);
+                            }
+                        } else {
+                            $supply_update = $this->Model_purchase_order->updateSupplyStatusFromPurchasingOrder($order_id);
+                            if($supply_update === null) {
+                                log_message('error', 'Failed to update PO supply status after purchasing update. Purchase Order ID: ' . $order_id);
+                            }
+                            $payment_update = $this->Model_purchase_order->updatePaymentStatusFromPurchasingOrder($order_id);
+                            if($payment_update === null) {
+                                log_message('error', 'Failed to update PO payment status after purchasing update. Purchase Order ID: ' . $order_id);
+                            }
                         }
 
                         $this->session->set_flashdata('success', 'Successfully updated');
@@ -3728,6 +3740,20 @@ class Product extends CI_Controller {
                     $data['units_data'] = $this->Model_products->getUnitsData();
 
                     $data['unit_data_values'] = $this->Model_products->getUnitValuesData();
+                    $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdown();
+                    $data['selected_po_id'] = 0;
+                    $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
+                    $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
+                    if ($po_link && $po_link_value !== null) {
+                        if ($po_link['field'] === 'purchase_order_custom_id' || $po_link['field'] === 'po_id') {
+                            $data['selected_po_id'] = (int)$po_link_value;
+                        } else {
+                            $row = $this->db->query("SELECT id FROM purchase_orders_custom WHERE po_number = ? LIMIT 1", array($po_link_value))->row_array();
+                            if ($row && isset($row['id'])) {
+                                $data['selected_po_id'] = (int)$row['id'];
+                            }
+                        }
+                    }
 
                     $data['loan_data'] = $this->Model_loan->getVendorRemainingLoanData($vendor_id);
 
@@ -4346,6 +4372,20 @@ class Product extends CI_Controller {
                 $data['units_data'] = $this->Model_products->getUnitsData();
 
                 $data['unit_data_values'] = $this->Model_products->getUnitValuesData();
+                $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdown();
+                $data['selected_po_id'] = 0;
+                $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
+                $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
+                if ($po_link && $po_link_value !== null) {
+                    if ($po_link['field'] === 'purchase_order_custom_id' || $po_link['field'] === 'po_id') {
+                        $data['selected_po_id'] = (int)$po_link_value;
+                    } else {
+                        $row = $this->db->query("SELECT id FROM purchase_orders_custom WHERE po_number = ? LIMIT 1", array($po_link_value))->row_array();
+                        if ($row && isset($row['id'])) {
+                            $data['selected_po_id'] = (int)$row['id'];
+                        }
+                    }
+                }
 
                 $data['loan_data'] = $this->Model_loan->getVendorRemainingLoanData($vendor_id);
 
