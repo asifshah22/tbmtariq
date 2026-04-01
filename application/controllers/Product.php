@@ -2272,7 +2272,7 @@ class Product extends CI_Controller {
 
     {
 
-        if(!in_array('createPurchasing', $this->permission)) {
+        if(!in_array('createPurchasing', $this->permission) && !in_array('updatePurchasing', $this->permission)) {
             echo json_encode(array('success' => false, 'message' => 'Access denied'));
             return;
         }
@@ -2860,6 +2860,20 @@ class Product extends CI_Controller {
             if(!empty($data['purchase_order_data']) && !empty($data['purchase_items_data']))
 
             {
+                $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdownAll();
+                $data['selected_po_id'] = 0;
+                $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
+                $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
+                if ($po_link && $po_link_value !== null) {
+                    if ($po_link['field'] === 'purchase_order_custom_id' || $po_link['field'] === 'po_id') {
+                        $data['selected_po_id'] = (int)$po_link_value;
+                    } else {
+                        $row = $this->db->query("SELECT id FROM purchase_orders_custom WHERE po_number = ? LIMIT 1", array($po_link_value))->row_array();
+                        if ($row && isset($row['id'])) {
+                            $data['selected_po_id'] = (int)$row['id'];
+                        }
+                    }
+                }
 
                 $this->form_validation->set_rules('product[]', 'Product name', 'trim|required');
 
@@ -3740,7 +3754,7 @@ class Product extends CI_Controller {
                     $data['units_data'] = $this->Model_products->getUnitsData();
 
                     $data['unit_data_values'] = $this->Model_products->getUnitValuesData();
-                    $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdown();
+                    $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdownAll();
                     $data['selected_po_id'] = 0;
                     $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
                     $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);
@@ -4372,7 +4386,7 @@ class Product extends CI_Controller {
                 $data['units_data'] = $this->Model_products->getUnitsData();
 
                 $data['unit_data_values'] = $this->Model_products->getUnitValuesData();
-                $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdown();
+                $data['po_orders'] = $this->Model_purchase_order->getOrdersForDropdownAll();
                 $data['selected_po_id'] = 0;
                 $po_link = $this->Model_purchase_order->getPurchasingLinkFieldInfo();
                 $po_link_value = $this->Model_purchase_order->getPurchasingLinkValueByPurchaseOrderId($order_id);

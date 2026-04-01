@@ -125,7 +125,7 @@
               <div class="form-group">
                 <label class="col-sm-1 control-label">PO No</label>
                 <div class="col-sm-11">
-                  <select class="form-control" name="purchase_order_id" id="purchase_order_id">
+                  <select class="form-control" name="purchase_order_id" id="purchase_order_id" disabled>
                     <option value="">-- Select PO Number --</option>
                     <?php if (!empty($po_orders)): ?>
                       <?php foreach($po_orders as $po): ?>
@@ -154,6 +154,7 @@
                       <?php endforeach; ?>
                     <?php endif; ?>
                   </select>
+                  <input type="hidden" name="purchase_order_id" value="<?php echo !empty($selected_po_id) ? $selected_po_id : ''; ?>">
                 </div>
               </div>
 
@@ -932,6 +933,96 @@
 
 
   var base_url = "<?php echo base_url(); ?>";
+  var poFillQtyMap = {};
+
+  function buildProductRowHtmlUpdate(row_id, vendor_products, showRateCol) {
+    var html = '<tr id="row_'+row_id+'">'+
+      '<td>'+
+        '<select class="form-control select_product" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" style="width:100%;" onchange="setOnProductChange('+row_id+')" required>'+
+        '<option value="">Select Product</option>';
+
+    for (var i = 0; i < vendor_products.length; i++) {
+      var category_name = '';
+      var value = '';
+      if (vendor_products[i].category_name == null) {
+        category_name = '';
+        value = vendor_products[i].select_product_price + '- ';
+      } else {
+        category_name = ' &#8212 ' + vendor_products[i].category_name;
+        value = vendor_products[i].select_product_price + '-' + vendor_products[i].category_id;
+      }
+      html += '<option value="'+value+'">'+vendor_products[i].product_name + ' ' + category_name+'</option>';
+    }
+
+    html += '</select>'+
+      '</td>'+
+      '<td>'+
+        '<select required="true" class="form-control select_unit" data-row-id="'+row_id+'" id="select_unit_'+row_id+'" name="select_unit[]" onchange="getProductPriceData('+row_id+')">'+
+        '<option value="">Select Unit</option>';
+        <?php foreach ($units_data as $key => $value): ?>
+          var unit_id = <?php echo $value['id']; ?>;
+          var unit_name = "<?php echo $value['unit_name']; ?>";
+          html += '<option value="'+unit_id+'">'+unit_name+'</option>';
+        <?php endforeach; ?>
+    html += '</select>'+
+      '</td>'+
+      '<td><input type="number" min="0.1" step="any" name="qty[]" id="qty_'+row_id+'" class="form-control noscroll" onkeyup="getTotal('+row_id+')"></td>';
+
+    if (showRateCol) {
+      html += '<td><input type="text" name="rate[]" id="rate_'+row_id+'" class="form-control" disabled><input type="hidden" name="rate_value[]" id="rate_value_'+row_id+'" class="form-control"></td>';
+    } else {
+      html += '<input type="hidden" name="rate[]" id="rate_'+row_id+'" class="form-control" disabled><input type="hidden" name="rate_value[]" id="rate_value_'+row_id+'" class="form-control">';
+    }
+
+    html += '<td><input type="text" name="return_items[]" id="return_items_'+row_id+'" class="form-control" disabled value="0"><input type="hidden" name="return_items_amount[]" value="0" id="return_items_amount_'+row_id+'" class="form-control"></td>'+
+      '<td><input type="text" name="amount[]" id="amount_'+row_id+'" class="form-control" disabled><input type="hidden" name="amount_value[]" id="amount_value_'+row_id+'" class="form-control"></td>'+
+      '<td><button type="button" class="btn btn-default" onclick="removeRow(\''+row_id+'\')"><i class="fa fa-close"></i></button></td>'+
+    '</tr>';
+
+    return html;
+  }
+
+  function findProductValueUpdate($select, product_id, part_name) {
+    if (!product_id) {
+      return '';
+    }
+    var found = '';
+    $select.find('option').each(function() {
+      var optVal = $(this).val();
+      if (!optVal) {
+        return;
+      }
+      var optProductId = String(optVal).split('-')[0];
+      if (String(optProductId).trim() === String(product_id)) {
+        found = optVal;
+        return false;
+      }
+    });
+
+    if (!found && part_name) {
+      var newVal = product_id + '- ';
+      $select.append($('<option>', { value: newVal, text: part_name }));
+      found = newVal;
+    }
+
+    return found;
+  }
+
+  function findUnitValueUpdate($select, unitName) {
+    if (!unitName) {
+      return '';
+    }
+    var desired = $.trim(unitName).toLowerCase();
+    var found = '';
+    $select.find('option').each(function() {
+      var text = $.trim($(this).text()).toLowerCase();
+      if (text === desired) {
+        found = $(this).val();
+        return false;
+      }
+    });
+    return found;
+  }
 
 
 
@@ -1171,6 +1262,99 @@ $(".select_product").select2({
 return false;
 
 });
+
+    $("#purchase_order_id").on('change', function() {
+      var po_id = $(this).val();
+      if (!po_id) {
+        return;
+      }
+
+      var vendor_id = "<?php echo $vendor_data['id'] ?>";
+      if (!vendor_id) {
+        return;
+      }
+
+      $.ajax({
+        url: base_url + 'index.php/Product/getPurchaseOrderItems',
+        type: 'post',
+        data: {po_id: po_id},
+        dataType: 'json',
+        success: function(poResponse) {
+          if (!poResponse || poResponse.success !== true) {
+            return;
+          }
+
+          var poItems = poResponse.items || [];
+          if (poItems.length === 0) {
+            $("#product_info_table tbody").html('');
+            subAmount();
+            return;
+          }
+
+          $.ajax({
+            url: base_url + 'index.php/Product/getTablesData',
+            type: 'post',
+            data: {vendor_id: vendor_id},
+            dataType: 'json',
+            success: function(response) {
+              if (response.success !== true) {
+                return;
+              }
+
+              var showRateCol = <?php if(in_array('viewProductRate', $user_permission)){ echo 1; }else{ echo 0; } ?>;
+              var vendor_products = response.data.vendor_products || [];
+              var html = '';
+              for (var i = 0; i < poItems.length; i++) {
+                var row_id = i + 1;
+                html += buildProductRowHtmlUpdate(row_id, vendor_products, showRateCol);
+              }
+
+              $("#product_info_table tbody").html(html);
+
+              for (var j = 0; j < poItems.length; j++) {
+                var rId = j + 1;
+                var item = poItems[j];
+
+                $('#product_' + rId).select2({ width: '100%' });
+                $('#select_unit_' + rId).select2({ width: '100%' });
+
+                var $product = $("#product_" + rId);
+                var productVal = findProductValueUpdate($product, item.product_id, item.part_name);
+                if (productVal) {
+                  $product.val(productVal).trigger('change');
+                }
+
+                setOnProductChange(rId);
+
+                var $unit = $("#select_unit_" + rId);
+                var unitVal = findUnitValueUpdate($unit, item.unit);
+                if (unitVal) {
+                  $unit.val(unitVal).trigger('change');
+                }
+                $unit.prop("disabled", false);
+
+                if (item.rate && Number(item.rate) > 0) {
+                  $("#rate_" + rId).val(item.rate);
+                  $("#rate_value_" + rId).val(item.rate);
+                  $("#qty_" + rId).val(item.qty);
+                  $("#qty_" + rId).prop("disabled", false);
+
+                  var total = item.amount && Number(item.amount) > 0 ? Number(item.amount) : Number(item.rate) * Number(item.qty);
+                  total = total.toFixed(2);
+                  $("#amount_" + rId).val(total);
+                  $("#amount_value_" + rId).val(total);
+                } else {
+                  poFillQtyMap[rId] = Number(item.qty);
+                  getProductPriceData(rId);
+                }
+              }
+
+              subAmount();
+            }
+          });
+        }
+      });
+    });
 
 
 
@@ -1505,8 +1689,15 @@ function setOnProductChange(row_id)
               $("#amount_"+row_id).val(total);
 
               $("#amount_value_"+row_id).val(total);
-
-              subAmount();
+              if (poFillQtyMap.hasOwnProperty(row_id)) {
+                var desiredQty = poFillQtyMap[row_id];
+                $("#qty_"+row_id).val(desiredQty);
+                $("#qty_"+row_id).prop("disabled", false);
+                delete poFillQtyMap[row_id];
+                getTotal(row_id);
+              } else {
+                subAmount();
+              }
 
             }
 
