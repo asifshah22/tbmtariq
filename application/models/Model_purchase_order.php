@@ -118,6 +118,16 @@ class Model_purchase_order extends CI_Model
         return $this->db->update('purchase_orders_custom', array('payment_status' => 'Complete'));
     }
 
+    public function markPaymentPending($order_id)
+    {
+        if (!$order_id) {
+            return false;
+        }
+
+        $this->db->where('id', $order_id);
+        return $this->db->update('purchase_orders_custom', array('payment_status' => 'Pending'));
+    }
+
     public function updateSupplyStatusFromPurchasing($po_id, $purchase_order_id = null)
     {
         if (!$po_id) {
@@ -239,6 +249,11 @@ class Model_purchase_order extends CI_Model
                 log_message('error', 'PO payment update: Failed to mark payment complete. PO ID: ' . $po_id);
             }
             return true;
+        }
+
+        $updated = $this->markPaymentPending($po_id);
+        if ($updated === false) {
+            log_message('error', 'PO payment update: Failed to mark payment pending. PO ID: ' . $po_id);
         }
 
         return false;

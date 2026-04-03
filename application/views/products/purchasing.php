@@ -741,6 +741,29 @@
 
   var base_url = "<?php echo base_url(); ?>";
   var poFillQtyMap = {};
+  var poOptionCache = null;
+
+  function filterPoOptionsByVendor(vendorId) {
+    var $poSelect = $("#purchase_order_id");
+    if (!poOptionCache) {
+      poOptionCache = $poSelect.find('option').clone();
+    }
+
+    $poSelect.empty();
+    poOptionCache.each(function() {
+      if (!this.value) {
+        $poSelect.append($(this).clone());
+        return;
+      }
+
+      var optVendor = $(this).attr('data-vendor');
+      if (vendorId && String(optVendor) === String(vendorId)) {
+        $poSelect.append($(this).clone());
+      }
+    });
+
+    $poSelect.val("");
+  }
 
   function buildProductRowHtml(row_id, vendor_products, showRateCol) {
     var html = '<tr id="row_'+row_id+'">'+
@@ -1400,20 +1423,7 @@
             }
 
             var vendorId = response.data.vendor_data.id;
-            var $poSelect = $("#purchase_order_id");
-            $poSelect.val("");
-            $poSelect.find('option').each(function() {
-              if (!this.value) {
-                $(this).show();
-                return;
-              }
-              var optVendor = $(this).data('vendor');
-              if (String(optVendor) === String(vendorId)) {
-                $(this).show();
-              } else {
-                $(this).hide();
-              }
-            });
+            filterPoOptionsByVendor(vendorId);
           }
 
           var table = $("#product_info_table");
