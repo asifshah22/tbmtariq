@@ -2310,7 +2310,8 @@ class Product extends CI_Controller {
                 'qty' => $qty,
                 'unit' => isset($item['unit']) ? $item['unit'] : '',
                 'rate' => isset($item['rate']) ? (float)$item['rate'] : 0.0,
-                'amount' => isset($item['amount']) ? (float)$item['amount'] : 0.0
+                'amount' => isset($item['amount']) ? (float)$item['amount'] : 0.0,
+                'item_date' => isset($item['item_date']) ? $item['item_date'] : ''
             );
         }
 
@@ -2601,6 +2602,8 @@ class Product extends CI_Controller {
                 $purchase_order_id = $this->db->insert_id();
 
                 $count_product = count($this->input->post('product'));
+                $item_dates = $this->input->post('item_date');
+                $has_item_date = $this->db->field_exists('item_date', 'purchase_items');
 
                 for($x = 0; $x < $count_product; $x++)
 
@@ -2639,6 +2642,10 @@ class Product extends CI_Controller {
                         'unit_id' => $this->input->post('select_unit')[$x]
 
                     );
+                    if ($has_item_date) {
+                        $item_date = isset($item_dates[$x]) && $item_dates[$x] ? $item_dates[$x] : date('Y-m-d');
+                        $items['item_date'] = $item_date;
+                    }
 
 
 
@@ -3233,6 +3240,8 @@ class Product extends CI_Controller {
                         // insert new items
 
                         $count_product = count($selected_products);
+                        $item_dates = $this->input->post('item_date');
+                        $has_item_date = $this->db->field_exists('item_date', 'purchase_items');
 
                         for($x = 0; $x < $count_product; $x++)
 
@@ -3291,6 +3300,10 @@ class Product extends CI_Controller {
                                 'unit_id' => $this->input->post('select_unit')[$x]
 
                             );
+                            if ($has_item_date) {
+                                $item_date = isset($item_dates[$x]) && $item_dates[$x] ? $item_dates[$x] : date('Y-m-d');
+                                $items['item_date'] = $item_date;
+                            }
 
                             if ($po_link && $po_link_value !== null && $po_link['table'] === 'purchase_items') {
                                 $items[$po_link['field']] = $po_link_value;

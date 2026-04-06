@@ -334,6 +334,8 @@
 
                                 <tr>
 
+                                 <th class="required-field">Date</th>
+
                                  <th style="width:25%" class="required-field">Product</th>
 
                                  <th style="width:20%" class="required-field">Unit</th>
@@ -373,6 +375,10 @@
                                <?php foreach ($purchase_items_data as $key => $val): ?>
 
                                 <tr id="row_<?php echo $x; ?>">
+
+                                 <td>
+                                  <input type="date" name="item_date[]" id="item_date_<?php echo $x; ?>" class="form-control" value="<?php echo isset($val['item_date']) && $val['item_date'] ? $val['item_date'] : date('Y-m-d'); ?>" required>
+                                 </td>
 
                                  <td>
 
@@ -465,7 +471,7 @@
 
                        </td>
 
-                       <td>  
+                      <td>  
 
                         <input type="number" min="0.1" step="any" name="qty[]" id="qty_<?php echo $x; ?>" class="form-control noscroll" onkeyup="getTotal(<?php echo $x; ?>)" value="<?php echo $val['qty']; ?>">
 
@@ -934,9 +940,11 @@
 
   var base_url = "<?php echo base_url(); ?>";
   var poFillQtyMap = {};
+  var itemRowDefaultDate = "<?php echo date('Y-m-d'); ?>";
 
   function buildProductRowHtmlUpdate(row_id, vendor_products, showRateCol) {
     var html = '<tr id="row_'+row_id+'">'+
+      '<td><input type="date" required name="item_date[]" id="item_date_'+row_id+'" class="form-control" value="'+itemRowDefaultDate+'"></td>'+
       '<td>'+
         '<select class="form-control select_product" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" style="width:100%;" onchange="setOnProductChange('+row_id+')" required>'+
         '<option value="">Select Product</option>';
@@ -1121,6 +1129,7 @@ $(".select_product").select2({
 
 
 
+         '<td><input type="date" required name="item_date[]" id="item_date_'+row_id+'" class="form-control" value="'+itemRowDefaultDate+'"></td>'+
          '<td>'+ 
 
          '<select class="form-control" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" onchange="setOnProductChange('+row_id+')" required>'+
@@ -1332,6 +1341,10 @@ return false;
                   $unit.val(unitVal).trigger('change');
                 }
                 $unit.prop("disabled", false);
+
+                if (item.item_date) {
+                  $("#item_date_" + rId).val(item.item_date);
+                }
 
                 if (item.rate && Number(item.rate) > 0) {
                   $("#rate_" + rId).val(item.rate);

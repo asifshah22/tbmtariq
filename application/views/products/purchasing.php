@@ -280,6 +280,8 @@
 
                           <tr>
 
+                            <th style="width:15%" class="required-field">Date</th>
+
                             <th style="width:35%" class="required-field">Product</th>
 
                             <th style="width:15%" class="required-field">Unit</th>
@@ -741,6 +743,7 @@
 
   var base_url = "<?php echo base_url(); ?>";
   var poFillQtyMap = {};
+  var itemRowDefaultDate = "<?php echo date('Y-m-d'); ?>";
   var poOptionCache = null;
 
   function filterPoOptionsByVendor(vendorId) {
@@ -767,6 +770,7 @@
 
   function buildProductRowHtml(row_id, vendor_products, showRateCol) {
     var html = '<tr id="row_'+row_id+'">'+
+      '<td><input type="date" required name="item_date[]" id="item_date_'+row_id+'" class="form-control" value="'+itemRowDefaultDate+'"></td>'+
       '<td>'+
         '<select style="width: 100%" class="form-control select_group" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" onchange="setOnProductChange('+row_id+')" required>'+
         '<option value="">Select Product</option>';
@@ -1002,6 +1006,10 @@
                 }
                 $unit.prop("disabled", false);
 
+                if (item.item_date) {
+                  $("#item_date_" + rId).val(item.item_date);
+                }
+
                 if (item.rate && Number(item.rate) > 0) {
                   $("#rate_" + rId).val(item.rate);
                   $("#rate_value_" + rId).val(item.rate);
@@ -1076,6 +1084,7 @@
 
 
 
+                  '<td><input type="date" required name="item_date[]" id="item_date_'+row_id+'" class="form-control" value="'+itemRowDefaultDate+'"></td>'+
                   '<td>'+ 
 
                   '<select style="width: 100%" class="form-control" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" onchange="setOnProductChange('+row_id+')" required>'+
@@ -1434,6 +1443,7 @@
 
                 
 
+                '<td><input type="date" required name="item_date[]" id="item_date_'+row_id+'" class="form-control" value="'+itemRowDefaultDate+'"></td>'+
                 '<td>'+ 
 
                   '<select style="width: 100%" class="form-control select_group" data-row-id="'+row_id+'" id="product_'+row_id+'" name="product[]" onchange="setOnProductChange('+row_id+')" required>'+
